@@ -19,7 +19,7 @@ Los scripts de despliegue y borrado de la aplicación están preparados para eje
 
 #### Instalación de Serverless y los plugins
 
-En <a href="https://serverless.com/framework/docs/providers/aws/guide/installation0/">este enlace</a> tienes las instricciones para la insalación de serverless.
+En <a href="https://serverless.com/framework/docs/providers/aws/guide/installation0/">este enlace</a> tienes las instrucciones para la instalación de serverless.
 
 Posteriormente es necesaria la instalación de los plugins <a href="https://serverless.com/framework/docs/providers/aws/cli-reference/plugin-install/">de este modo.</a>
 
