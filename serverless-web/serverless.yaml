@@ -1,0 +1,57 @@
+service: iic-serverless-web
+
+plugins:
+  - serverless-s3-sync
+  - serverless-plugin-resource-tagging
+custom:
+  siteName: iic-serverless-web-${self:provider.stage}
+  s3Sync:
+    - bucketName: ${self:custom.siteName}
+      localDir: static
+  
+
+provider:
+  name: aws                   # Assuming this is for AWS.
+  region: eu-west-1           # Name of the region to deploy all resources to. 
+  timeout: 30
+  stage: ${opt:stage, 'dev'}
+  stackTags:
+     OPI-Code : "008_900400"
+
+resources:
+  Resources:
+    StaticSite:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: PublicRead
+        BucketName: ${self:custom.siteName}
+        WebsiteConfiguration:
+          IndexDocument: index.html
+
+    StaticSiteS3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: StaticSite
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action:
+              - 's3:GetObject'
+              Resource:
+                Fn::Join: [
+                  "", [
+                    "arn:aws:s3:::",
+                    {
+                      "Ref": "StaticSite"
+                    },
+                    "/*"
+                  ]
+                ]
+
+  Outputs:
+    weburl:
+      Value: "http://${self:custom.siteName}.s3-website-${self:provider.region}.amazonaws.com"
+        

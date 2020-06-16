@@ -1,0 +1,159 @@
+service: s3-api-python
+
+provider:
+  name: aws
+  runtime: python3.6
+  region: eu-west-1
+  memorySize: 512
+  stage: ${opt:stage, 'dev'}
+  stackTags:
+     OPI-Code : "008_900400" 
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: '*'
+
+package:
+  individually: true
+  exclude:
+    - ./**
+
+plugins:
+  - serverless-plugin-resource-tagging
+  - serverless-apigw-binary
+  - serverless-s3-remover
+
+custom:
+  apigwBinary:
+    types:
+      - 'multipart/form-data'
+  album-bucket: iic-serverless-album-${self:provider.stage}
+  remover:
+     buckets:
+       - ${self:custom.album-bucket}
+  
+
+functions:
+  listAlbums:
+    handler: src/handler.list_album
+    description: Lista los albumes creados
+    package:
+      include:
+        - src/handler.py
+    environment:
+      STAGE: ${self:provider.stage}
+      BUCKET: ${self:custom.album-bucket}
+      REGION: eu-west-1
+    events:
+      - http:
+          path: /list_album/
+          method: get
+
+
+  listObjects:
+    handler: src/handler.list_objects
+    description: Lista las imagenes subidas.
+    package:
+      include:
+        - src/handler.py
+    environment:
+      BUCKET: ${self:custom.album-bucket}
+      REGION: eu-west-1
+    events:
+      - http:
+          path: /list_objects/{album}/
+          method: get
+
+  checkObject:
+    handler: src/handler.head_object
+    description: Comprueba si un album existe
+    package:
+      include:
+        - src/handler.py
+    environment:
+      BUCKET: ${self:custom.album-bucket}
+      REGION: eu-west-1
+    events:
+      - http:
+          path: /head_object/{album}/
+          method: get
+
+  putObject:
+    handler: src/handler.put_object
+    description: Crea un album
+    package:
+      include:
+        - src/handler.py
+        
+    environment:
+      BUCKET: ${self:custom.album-bucket}
+      REGION: eu-west-1
+    events:
+      - http:
+          path: /put_object/{album}
+          method: post
+
+  deleteObject:
+    handler: src/handler.delete_object
+    description: Borra una imagen o un album
+    package:
+      include:
+        - src/handler.py
+    environment:
+      BUCKET: ${self:custom.album-bucket}
+      REGION: eu-west-1
+    events:
+      - http:
+          path: /delete_object/{album}/{photo}/
+          method: post
+
+  uploadObject:
+    handler: src/handler.upload_object
+    description: Sube una imagen
+    timeout: 20
+    package:
+      include:
+        - src/handler.py
+    environment:
+      BUCKET: ${self:custom.album-bucket}
+      REGION: eu-west-1
+    events:
+      - http:
+          path: /upload_object/{album}/{photo}/
+          method: post
+
+resources:
+  Resources:
+    Album:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.album-bucket}
+
+    ApiGatewayRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: ApiGW
+
+    S3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: Album
+        PolicyDocument:
+          Statement:
+            - Sid: PublicAccess
+              Effect: Allow
+              Principal: "*"
+              Action:
+              - 's3:*'
+              Resource:
+                Fn::Join: [
+                  "", [
+                    "arn:aws:s3:::",
+                    {
+                      "Ref": "Album"
+                    },
+                    "/*"
+                  ]
+                ]

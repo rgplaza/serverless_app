@@ -1,0 +1,5 @@
+node_modules
+.serverless
+.env
+*.json
+serverless-web/static/apiserver.js
