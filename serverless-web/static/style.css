@@ -19,7 +19,7 @@ html {
 h1 {
   text-align: center;
   padding: 1rem 2.5rem;
-  background: #efd7d700 url("iic_logo.jpg") no-repeat scroll 15% 50%;
+  background: #efd7d700 url("iic_logo.jpg") no-repeat scroll 15% 50%/15vw;
   margin: 0 0 2rem 0;
   font-size: 2.5rem;
   color: red;
@@ -31,6 +31,7 @@ h1 {
 
 h1 span {
   background-color: #efd7d700;
+  font-size: 5vw;
 }
 
 h2 {
